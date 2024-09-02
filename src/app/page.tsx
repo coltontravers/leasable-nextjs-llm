@@ -3,30 +3,26 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useChat } from "ai/react";
+import { getMessages } from "./actions/generate";
 
 export default function Home() {
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
-  const { messages, handleSubmit, isLoading, append, setMessages } = useChat();
+  const [generation, setGeneration] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const handleCheck = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCheck = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setMessages([]);
+    setIsLoading(true);
     const objPrompt = {
-      productName,
+      productTitle: productName,
       productDescription,
     };
-    // append({
-    //   role: "user",
-    //   content: `Return an array of all the ids of the items that are non-lease-to-own compliant. Here's the items:
+    console.log(JSON.stringify(objPrompt));
+    const { notifications } = await getMessages(JSON.stringify(objPrompt));
 
-    //   ${JSON.stringify(objPrompt)}`,
-    // });
-    append({
-      role: "user",
-      content: JSON.stringify(objPrompt),
-    });
+    setGeneration(JSON.stringify(notifications, null, 2));
+    setIsLoading(false);
   };
 
   return (
@@ -50,7 +46,7 @@ export default function Home() {
             value={productDescription}
             onChange={(e) => setProductDescription(e.target.value)}
           />
-          <Button type="submit">
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? "Checking..." : "Check Leasability"}
           </Button>
         </form>
@@ -59,8 +55,8 @@ export default function Home() {
         <pre className="text-sm whitespace-pre-wrap max-h-[30vh] overflow-auto">
           {isLoading
             ? "Loading..."
-            : messages.length > 0
-            ? messages[messages.length - 1].content
+            : generation
+            ? generation
             : "No result yet. Try entering a product."}
         </pre>
       </div>
